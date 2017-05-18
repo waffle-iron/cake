@@ -40,6 +40,9 @@ defmodule Cake.Service.Mixfile do
     #
     # Type "mix help deps" for more examples and options
     defp deps do
-        []
+        [
+            { :swoosh, "~> 0.8.0" },
+            { :phoenix_swoosh, "~> 0.2.0" }
+        ]
     end
 end
