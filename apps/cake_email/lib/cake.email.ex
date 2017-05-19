@@ -2,6 +2,9 @@ defmodule Cake.Email do
     @moduledoc """
       Compose and represent emails.
 
+      The `Cake.Email` struct is enumerable, where it will enumerate over fields
+      that are non-nil.
+
       ##Fields
 
       ###:from
@@ -42,8 +45,8 @@ defmodule Cake.Email do
         headers: map | nil,
         cc: [address] | address | nil,
         bcc: [address] | address | nil,
-        subject: String.t,
-        body: Email.Body.t,
+        subject: String.t | nil,
+        body: Email.Body.t | nil,
         attachments: [attachment] | attachment | nil
     }
     @type template :: %{ :formatter => (template -> t), optional(any) => any }
@@ -91,4 +94,53 @@ defmodule Cake.Email do
     def compose(email, params \\ [])
     def compose(email = %Email{}, params), do: Map.merge(email, Map.new(params))
     def compose(template = %{ formatter: formatter }, params), do: compose(formatter.(template), params)
+
+    defimpl Enumerable, for: Email do
+        def count(email) do
+            { :ok,
+                Map.values(email)
+                |> Enum.count(fn
+                    Email -> false
+                    nil -> false
+                    _ -> true
+                end)
+            }
+        end
+
+        def member?(%Email{ from: from }, :from), do: { :ok, from != nil }
+        def member?(%Email{ to: to }, :to), do: { :ok, to != nil }
+        def member?(%Email{ reply_to: reply_to }, :reply_to), do: { :ok, reply_to != nil }
+        def member?(%Email{ headers: headers }, :headers), do: { :ok, headers != nil }
+        def member?(%Email{ cc: cc }, :cc), do: { :ok, cc != nil }
+        def member?(%Email{ bcc: bcc }, :bcc), do: { :ok, bcc != nil }
+        def member?(%Email{ subject: subject }, :subject), do: { :ok, subject != nil }
+        def member?(%Email{ body: body }, :body), do: { :ok, body != nil }
+        def member?(%Email{ attachments: attachments }, :attachments), do: { :ok, attachments != nil }
+        def member?(_, _), do: { :ok, false }
+
+        def reduce(_, { :halt, acc }, _), do: { :halted, acc }
+        def reduce(email, { :suspend, acc }, fun), do: { :suspended, acc, &reduce(email, &1, fun) }
+        def reduce(email = %Email{}, { :cont, acc }, fun), do: reduce({ :from, email }, { :cont, acc }, fun)
+        def reduce({ :from,     email = %Email{ from: value } },        { :cont, acc }, fun) when is_nil(value), do: reduce({ :to, email },          { :cont, acc }, fun)
+        def reduce({ :to,       email = %Email{ to: value } },          { :cont, acc }, fun) when is_nil(value), do: reduce({ :reply_to, email },    { :cont, acc }, fun)
+        def reduce({ :reply_to, email = %Email{ reply_to: value } },    { :cont, acc }, fun) when is_nil(value), do: reduce({ :headers, email },     { :cont, acc }, fun)
+        def reduce({ :headers,  email = %Email{ headers: value } },     { :cont, acc }, fun) when is_nil(value), do: reduce({ :cc, email },          { :cont, acc }, fun)
+        def reduce({ :cc,       email = %Email{ cc: value } },          { :cont, acc }, fun) when is_nil(value), do: reduce({ :bcc, email },         { :cont, acc }, fun)
+        def reduce({ :bcc,      email = %Email{ bcc: value } },         { :cont, acc }, fun) when is_nil(value), do: reduce({ :subject, email },     { :cont, acc }, fun)
+        def reduce({ :subject,  email = %Email{ subject: value } },     { :cont, acc }, fun) when is_nil(value), do: reduce({ :body, email },        { :cont, acc }, fun)
+        def reduce({ :body,     email = %Email{ body: value } },        { :cont, acc }, fun) when is_nil(value), do: reduce({ :attachments, email }, { :cont, acc }, fun)
+        def reduce({ :attachments,      %Email{ attachments: value } }, { :cont, acc }, _)   when is_nil(value), do: { :done, acc }
+        def reduce({ :from,     email = %Email{ from: value } },        { :cont, acc }, fun), do: reduce({ :to, email },          fun.({ :from, value }, acc),     fun)
+        def reduce({ :to,       email = %Email{ to: value } },          { :cont, acc }, fun), do: reduce({ :reply_to, email },    fun.({ :to, value }, acc),       fun)
+        def reduce({ :reply_to, email = %Email{ reply_to: value } },    { :cont, acc }, fun), do: reduce({ :headers, email },     fun.({ :reply_to, value }, acc), fun)
+        def reduce({ :headers,  email = %Email{ headers: value } },     { :cont, acc }, fun), do: reduce({ :cc, email },          fun.({ :headers, value }, acc),  fun)
+        def reduce({ :cc,       email = %Email{ cc: value } },          { :cont, acc }, fun), do: reduce({ :bcc, email },         fun.({ :cc, value }, acc),       fun)
+        def reduce({ :bcc,      email = %Email{ bcc: value } },         { :cont, acc }, fun), do: reduce({ :subject, email },     fun.({ :bcc, value }, acc),      fun)
+        def reduce({ :subject,  email = %Email{ subject: value } },     { :cont, acc }, fun), do: reduce({ :body, email },        fun.({ :subject, value }, acc),  fun)
+        def reduce({ :body,     email = %Email{ body: value } },        { :cont, acc }, fun), do: reduce({ :attachments, email }, fun.({ :body, value }, acc),     fun)
+        def reduce({ :attachments,      %Email{ attachments: value } }, { :cont, acc }, fun) do
+            { _, acc } = fun.({ :attachments, value }, acc)
+            { :done, acc }
+        end
+    end
 end
