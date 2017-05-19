@@ -24,6 +24,9 @@ defmodule Cake.Mixfile do
     # Dependencies listed here are available only for this project
     # and cannot be accessed from applications inside the apps folder
     defp deps do
-      []
+        [
+            { :ex_doc, "~> 0.15.1", only: :dev, runtime: false },
+            { :simple_markdown, "~> 0.3.0", only: :dev, runtime: false }
+        ]
     end
 end
