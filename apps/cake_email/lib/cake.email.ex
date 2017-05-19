@@ -28,9 +28,8 @@ defmodule Cake.Email do
         :attachments
     ]
 
-    @spec compose(t | template) :: t
-    def compose(email = %Email{}), do: email
-    def compose(template = %{ formatter: formatter }) do
-        formatter.(template)
-    end
+    @spec compose(t | template, keyword) :: t
+    def compose(email, params \\ [])
+    def compose(email = %Email{}, params), do: Map.merge(email, Map.new(params))
+    def compose(template = %{ formatter: formatter }, params), do: compose(formatter.(template), params)
 end
