@@ -33,4 +33,16 @@ defmodule Cake.EmailTest do
             body: %Email.Body{ text: "Hi Foo, Bar." }
         } == Email.compose(%TestTemplate{ name: "Foo", message: "Bar" }, subject: "test")
     end
+
+    test "enumerability" do
+        email = Email.compose(%TestTemplate{ name: "Foo", message: "Bar" })
+        assert [subject: "A test message", body: %Email.Body{ text: "Hi Foo, Bar." }] == Keyword.new(email)
+        assert false == Enum.member?(email, :from)
+        assert true == Enum.member?(email, :subject)
+
+        email = Email.compose(email, from: "foo@bar", subject: nil)
+        assert [from: "foo@bar", body: %Email.Body{ text: "Hi Foo, Bar." }] == Keyword.new(email)
+        assert true == Enum.member?(email, :from)
+        assert false == Enum.member?(email, :subject)
+    end
 end
