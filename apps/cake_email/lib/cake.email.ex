@@ -37,7 +37,7 @@ defmodule Cake.Email do
     alias Cake.Email
 
     @type address :: { name :: String.t, email :: String.t } | email :: String.t
-    @type attachment :: %{ path: String.t, filename: String.t, content_type: String.t } | file :: String.t
+    @type attachment :: %{ :path => String.t, optional(:filename) => String.t, optional(:content_type) => String.t } | file :: String.t
     @type t :: %Email{
         from: address | nil,
         to: [address] | address | nil,
