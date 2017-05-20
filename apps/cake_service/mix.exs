@@ -12,7 +12,7 @@ defmodule Cake.Service.Mixfile do
             elixir: "~> 1.4",
             build_embedded: Mix.env == :prod,
             start_permanent: Mix.env == :prod,
-            deps: deps()
+            deps: deps(Mix.Project.umbrella?)
         ]
     end
 
@@ -39,10 +39,6 @@ defmodule Cake.Service.Mixfile do
     #   {:my_app, in_umbrella: true}
     #
     # Type "mix help deps" for more examples and options
-    defp deps do
-        [
-            { :swoosh, "~> 0.8.0" },
-            { :phoenix_swoosh, "~> 0.2.0" }
-        ]
-    end
+    defp deps(false), do: deps(true) ++ [{ :cake_email, path: "../cake_email" }]
+    defp deps(true), do: [{ :swoosh, "~> 0.8.0" }]
 end
