@@ -42,7 +42,7 @@ defmodule Cake.Email do
         from: address | nil,
         to: [address] | address | nil,
         reply_to: address | nil,
-        headers: map | nil,
+        headers: %{ optional(String.t) => String.t } | nil,
         cc: [address] | address | nil,
         bcc: [address] | address | nil,
         subject: String.t | nil,
