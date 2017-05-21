@@ -7,7 +7,13 @@ defmodule Cake.Mixfile do
             build_embedded: Mix.env == :prod,
             start_permanent: Mix.env == :prod,
             deps: deps(),
-            dialyzer: [plt_add_deps: :transitive]
+            dialyzer: [plt_add_deps: :transitive],
+            name: "Cake",
+            source_url: "https://github.com/ScrimpyCat/cake",
+            docs: [
+                main: "cake",
+                extras: ["README.md": [filename: "cake", title: "Cake"]]
+            ]
         ]
     end
 
