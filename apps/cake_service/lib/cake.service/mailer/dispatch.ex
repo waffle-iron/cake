@@ -4,9 +4,9 @@ defmodule Cake.Service.Mailer.Dispatch do
 
     alias Cake.Email
 
-    @spec post(Email.t | Email.template) :: { :ok, term } | { :error, term }
-    def post(email) do
-        Email.compose(email)
+    @spec post(Email.t | Email.template, keyword) :: { :ok, term } | { :error, term }
+    def post(email, params \\ []) do
+        Email.compose(email, params)
         |> Keyword.new
         |> create_email
         |> deliver
